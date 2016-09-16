@@ -1,0 +1,17 @@
+{{extend 'layout.html'}}
+
+<h2>{{=written_by(user_id)}}</h2>
+{{for post in rows:}}
+<div class="well">
+    <a href="{{=URL('view_recepie',args=post.id)}}">{{=post.title}}</a>
+    <span style="float:right; padding-right:5px;">{{=post.votes}}</span>
+</div>
+{{pass}}
+
+{{if page>0:}}
+<a href="{{=URL('list_recepies_by_votes',args=(user_id,page-1))}}">&lt;&lt;&nbsp;Previous</a>
+{{pass}}
+
+{{if len(rows)>=20:}}
+<a href="{{=URL('list_recepies_by_votes',args=(user_id,page+1))}}" style="float:right;">Next&nbsp;&gt;&gt;</a>
+{{pass}}

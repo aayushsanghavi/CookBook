@@ -1,0 +1,4 @@
+{{extend 'layout.html'}}
+
+<h3>Which recepie are you going to share?</h3>
+{{=form}}

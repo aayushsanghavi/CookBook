@@ -1,0 +1,26 @@
+{{extend 'layout.html'}}
+
+<div class="panel-heading">
+<span style="margin-left:1%;font-weight:bold;font-size:130%;">Recipes</span> <span style="margin-left:89%;font-weight:bold;font-size:130%;">Likes</span>
+</div>
+
+{{for post in rows:}}
+<div class="well well-sm">
+    <img src="{{=URL('download',args=post.image)}}" style="width:7%;height:7%;margin-right:1%;"></img>
+    <a href="{{=URL('view_recipe',args=post.id)}}">{{=post.title}}</a>
+    <span style="float:right; padding-right:5px;">{{=post.votes}}</span><br/>
+</div>
+{{pass}}
+
+<ul class="pager">
+<li class="previous">
+{{if page:}}
+    <a href="{{=URL('list_recipes_by_votes',args=(page-1))}}"><h5><span class="glyphicon glyphicon-chevron-left">Previous</span></h5></a>
+{{pass}}
+</li>
+<li class="next">
+{{if len(rows)>=4:}}
+    <a class="next" href="{{=URL('list_recipes_by_votes',args=(page+1))}}"><h5>Next<span class="glyphicon glyphicon-chevron-right"></span></h5></a>
+{{pass}}
+</li>
+</ul>

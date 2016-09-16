@@ -1,0 +1,41 @@
+{{extend 'layout.html'}}
+
+<h3>{{=post.title}}</h3>
+<i>Created {{=prettydate(post.created_on)}} by {{=author(post.created_by)}}</i>
+
+<div class="well">
+    <h4>In Brief:</h4> <br>
+    <p>{{=post.short_description}}</p>
+</div>
+<div class="well">
+    <h4>Details:</h4> <br>
+    <p style="margin:0;padding:0;">{{=post.complete_description}}</p>
+</div>
+
+{{if post.created_by == auth.user_id:}}
+<a class="btn btn-link" href="{{=URL('edit_recepie',args=post.id)}}">Edit this recepie</a>
+{{pass}}
+
+<a class="btn btn-link" href="{{=URL('view_comments',args=post.id)}}">comments</a>
+<button class='btn btn-link' data-direction='up'>Like</button>
+<button class='btn btn-link' data-direction='down'>Dislike</button>
+&nbsp;&nbsp;&nbsp;
+Likes = <span class="votes">{{=post.votes}}</span>
+
+<script>
+    function do_ajax_vote(t,direction){
+    var id = {{=post.id}};
+        jQuery.ajax({method:'post',url:'{{=URL('vote_callback')}}',
+                     data:{'id':id,'direction':direction},
+                     success:function(data){
+                        $('.votes').html(data);
+                    }
+        });
+    }
+jQuery(function(){
+    jQuery('[data-direction=up').click(function(){
+        do_ajax_vote(this,'up');});
+    jQuery('[data-direction=down').click(function(){
+        do_ajax_vote(this,'down');});
+})
+</script>

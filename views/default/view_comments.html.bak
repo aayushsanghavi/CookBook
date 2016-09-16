@@ -1,0 +1,43 @@
+{{extend 'layout.html'}}
+
+<h3>Comments :</h3>
+{{for comment in comments:}}
+<div class='well well-sm'>
+    {{=author(comment.created_by)}}&nbsp; said &nbsp;"{{=comment.body}}"
+    <br>{{=prettydate(comment.created_on)}}<br><br>
+    <table>
+    <tr data-id="{{=comment.id}}">
+        <td><button class="btn btn-success btn-sm" data-direction="up" style="margin-right:10%;"><span class="glyphicon glyphicon-thumbs-up"></span> Like <span class="badge votes">{{=comment.votes}}</span></button></td>
+        <td><button class="btn btn-warning btn-sm" data-direction="down"><span class="glyphicon glyphicon-thumbs-down"></span> Dislike</button></td>
+    </tr>
+    </table>
+</div>
+{{pass}}
+
+<h3>
+    Your comment:
+</h3>
+    {{=form}}
+
+<ul class="pager">
+    <li class="previous"><a href="{{=URL('view_recipe',args=post.id)}}"><h5><span class="glyphicon glyphicon-arrow-left"></span> Back to recipe</h5></a></li>
+</ul>
+
+<script>
+function do_ajax_vote(t,direction){
+    var id = jQuery(t).closest('tr').attr("data-id");
+
+    jQuery.ajax({method:'post',url:'{{=URL('comm_vote_callback')}}',
+                data:{'id':id,'direction':direction},
+                success: function(data){
+                jQuery(t).closest('tr').find('.votes').html(data);
+                }
+        });
+ }
+jQuery(function(){
+    jQuery('[data-direction=up').click(function(){
+        do_ajax_vote(this,'up');});
+    jQuery('[data-direction=down').click(function(){
+        do_ajax_vote(this,'down');});
+})
+</script>

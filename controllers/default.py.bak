@@ -1,0 +1,133 @@
+# -*- coding: utf-8 -*-
+POSTS_PER_PAGE = 4
+
+@auth.requires_login()
+def index():
+    page = request.args(0,cast=int,default=0)
+    start = page*POSTS_PER_PAGE
+    stop = start+POSTS_PER_PAGE
+    rows = db(db.recipe).select(orderby=~db.recipe.created_on,limitby=(start,stop))
+    return locals()
+
+@auth.requires_login()
+def list_recipes_by_votes():
+    page = request.args(0,cast=int,default=0)
+    start = page*POSTS_PER_PAGE
+    stop = start+POSTS_PER_PAGE
+    rows = db(db.recipe).select(orderby=~db.recipe.votes,limitby=(start,stop))
+    return locals()
+
+@auth.requires_login()
+def my_recipes():
+    user_id = request.args(0,cast=int)
+    page = request.args(1,cast=int,default=0)
+    start = page*POSTS_PER_PAGE
+    stop = start+POSTS_PER_PAGE
+    rows = db(db.recipe.created_by==user_id).select(orderby=~db.recipe.created_on,limitby=(start,stop))
+    return locals()
+
+@auth.requires_login()
+def upload_recipe():
+    form = SQLFORM(db.recipe).process(next='view_recipe/[id]')
+    return locals()
+
+@auth.requires_login()
+def edit_recipe():
+    id = request.args(0,cast=int)
+    form = SQLFORM(db.recipe,id,showid=False).process(next='view_recipe/[id]')
+    return locals()
+
+@auth.requires_login()
+def view_recipe():
+    id = request.args(0,cast=int)
+    post = db.recipe(id) or redirect(URL('index'))
+    return locals()
+
+@auth.requires_membership('appadmin')
+def manage():
+    grid = SQLFORM.grid(db.recipe.created_by)
+    return locals()
+
+@auth.requires_login()
+def view_comments():
+    id = request.args(0,cast=int)
+    post = db.recipe(id)
+    if auth.user:
+        db.comm.recipe.default = id
+        form = SQLFORM(db.comm).process()
+    else:
+        form = A('((login to comment))', _href=URL('user/login',vars=dict(_next=URL(args=request.args))))
+    comments = db(db.comm.recipe==post.id).select(orderby=~db.comm.created_on)
+    return locals()
+
+@auth.requires_login()
+def vote_callback():
+    vars = request.post_vars
+    print "vars"
+    print vars
+    if vars:
+        id = vars.id
+        direction = +1 if vars.direction == 'up' else -1
+        post = db.recipe(id)
+        if post:
+            vote = db.vote(recipe=id,created_by=auth.user.id)
+            if not vote:
+                post.update_record(votes=post.votes+direction)
+                db.vote.insert(recipe=id,score=direction)
+            elif vote.score!=direction:
+                post.update_record(votes=post.votes+direction*2)
+                vote.update_record(score=direction)
+    return str(post.votes)
+
+@auth.requires_login()
+def comm_vote_callback():
+    vars = request.post_vars
+    if vars:
+        id = vars.id
+        direction = +1 if vars.direction == 'up' else -1
+        comm = db.comm(id)
+        if comm:
+            vote = db.comm_vote(comm=id,created_by=auth.user.id)
+            if not vote:
+                comm.update_record(votes=comm.votes+direction)
+                db.comm_vote.insert(comm=id,score=direction)
+            elif vote.score!=direction:
+                comm.update_record(votes=comm.votes+direction*2)
+                vote.update_record(score=direction)
+    return str(comm.votes)
+
+def user():
+    """
+    exposes:
+    http://..../[app]/default/user/login
+    http://..../[app]/default/user/logout
+    http://..../[app]/default/user/register
+    http://..../[app]/default/user/profile
+    http://..../[app]/default/user/retrieve_password
+    http://..../[app]/default/user/change_password
+    http://..../[app]/default/user/bulk_register
+    use @auth.requires_login()
+        @auth.requires_membership('group name')
+        @auth.requires_permission('read','table name',record_id)
+    to decorate functions that need access control
+    also notice there is http://..../[app]/appadmin/manage/auth to allow administrator to manage users
+    """
+    return dict(form=auth())
+
+
+@cache.action()
+def download():
+    """
+    allows downloading of uploaded files
+    http://..../[app]/default/download/[filename]
+    """
+    return response.download(request, db)
+
+def call():
+    """
+    exposes services. for example:
+    http://..../[app]/default/call/jsonrpc
+    decorate with @services.jsonrpc the functions to expose
+    supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
+    """
+    return service()

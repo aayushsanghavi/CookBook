@@ -1,0 +1,28 @@
+# -*- coding: utf-8 -*-
+
+db.define_table('recepie',
+               Field('title','string',requires=IS_NOT_EMPTY()),
+               Field('short_description',requires=IS_NOT_EMPTY()),
+               Field('complete_description','text',requires=IS_NOT_EMPTY()),
+               Field('votes','integer',default=0,readable=False,writable=False),
+               auth.signature)
+
+db.define_table('vote',
+               Field('recepie','reference recepie'),
+               Field('score','integer',default=+1),
+               auth.signature)
+
+db.define_table('comm',
+               Field('recepie','reference recepie',readable=False,writable=False),
+               Field('body','text'),
+               Field('votes','integer',readable=False,writable=False,default=0),
+               auth.signature)
+
+db.define_table('comm_vote',
+               Field('comm','reference comm'),
+               Field('score','integer',default=+1),
+               auth.signature)
+
+def written_by(id):
+    user = db.auth_user(id)
+    return '%(first_name)s %(last_name)s' % user
